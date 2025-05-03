@@ -86,18 +86,11 @@ df['W2V_Vector'] = df['Tokens'].apply(lambda tokens: vectorize_tokens(tokens, mo
 print("Preparing training and testing data...")
 X = np.vstack(df['W2V_Vector'].values)
 y = df['Category'].values
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 print("Training Logistic Regression model...")
 clf_w2v = LogisticRegression(max_iter=1000)
-clf_w2v.fit(X_train, y_train)
+clf_w2v.fit(X, y)
 
-print("Evaluating model...")
-y_pred = clf_w2v.predict(X_test)
-print(classification_report(y_test, y_pred))
-
-print("Predicting categories for training data...")
-df['Predicted_Category'] = clf_w2v.predict(X)
 
 print("Loading test data...")
 with open('test.json', 'r', encoding='utf-8') as f:
