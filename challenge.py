@@ -10,7 +10,7 @@ import json
 import numpy as np
 
 print("Loading training data...")
-with open('train_mini.json', 'r', encoding='utf-8') as f:
+with open('train.json', 'r', encoding='utf-8') as f:
     train_data = json.load(f)
 df = pd.DataFrame(train_data)
 print("Checking for problematic rows in 'description'...")
@@ -100,7 +100,7 @@ print("Predicting categories for training data...")
 df['Predicted_Category'] = clf_w2v.predict(X)
 
 print("Loading test data...")
-with open('test_mini.json', 'r', encoding='utf-8') as f:
+with open('test.json', 'r', encoding='utf-8') as f:
     test_data = json.load(f)
 test_df = pd.DataFrame(test_data)
 
@@ -115,7 +115,7 @@ print("Predicting categories for test data...")
 test_df['Predicted_Category_W2V'] = clf_w2v.predict(X_test_w2v)
 
 print("Preparing submission file...")
-template = pd.read_csv('template_submission.csv')
+template = pd.read_csv('template_submissions.csv')
 template['Category'] = template['Id'].map(
     test_df.set_index('Id')['Predicted_Category_W2V']
 )
