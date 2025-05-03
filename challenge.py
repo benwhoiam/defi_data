@@ -18,11 +18,13 @@ print("Loading Spacy model...")
 nlp = spacy.load('en_core_web_sm')
 
 def clean_and_tokenize(text):
-    text = re.sub(r'<[^>]+>', ' ', text)
-    text = re.sub(r'http\S+', ' ', text)
-    text = text.lower().strip()
-    doc = nlp(text)
-    tokens = [token.lemma_ for token in doc if token.is_alpha and not token.is_stop]
+    if not isinstance(text, str) or not text.strip():
+        return "", []  # Return empty values for invalid or empty input
+    text = re.sub(r'<[^>]+>', ' ', text)  # Remove HTML tags
+    text = re.sub(r'http\S+', ' ', text)  # Remove URLs
+    text = text.lower().strip()  # Convert to lowercase and strip whitespace
+    doc = nlp(text)  # Process text using SpaCy
+    tokens = [token.lemma_ for token in doc if token.is_alpha and not token.is_stop]  # Lemmatize and remove stopwords
     return " ".join(tokens), tokens
 
 print("Cleaning and tokenizing training data...")
