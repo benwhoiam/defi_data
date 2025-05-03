@@ -12,8 +12,7 @@ import numpy as np
 print("Loading training data...")
 with open('train.json', 'r', encoding='utf-8') as f:
     train_data = json.load(f)
-df = pd.DataFrame.from_dict(train_data, orient='index', columns=['description', 'Gender']).reset_index().rename(columns={'index': 'Id'})
-
+df = pd.DataFrame(train_data)
 print("Checking for problematic rows in 'description'...")
 print(df['description'].isnull().sum(), "rows are null in 'description'")
 print(df['description'].head())
