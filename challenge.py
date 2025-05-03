@@ -93,5 +93,3 @@ template['Category'] = template['Id'].map(
 template.to_csv('submission.csv', index=False)
 
 print("Submission file saved as 'submission.csv'.")
-
-print("a,adou added line")
