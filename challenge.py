@@ -40,9 +40,23 @@ def clean_and_tokenize(text):
     return " ".join(tokens), tokens
 
 # Apply the function to the 'description' column
-df[['Clean', 'Tokens']] = df['description'].apply(
-    lambda t: pd.Series(clean_and_tokenize(t))
-)
+print("Cleaning and tokenizing training data...")
+results = df['description'].apply(clean_and_tokenize)
+# 1. On transforme chaque tuple en une liste de taille 2, en remplaçant les invalides par ("",[])
+tuples = results.apply(lambda x: x if (isinstance(x, tuple) and len(x)==2) else ("","[]"))
+
+# 2. On crée un DataFrame à partir de ces tuples, en préservant l'index d'origine
+results_df = pd.DataFrame(tuples.tolist(), 
+                          index=results.index, 
+                          columns=['Clean', 'Tokens'])
+
+# 3. On l'ajoute directement à ton DataFrame principal
+df[['Clean', 'Tokens']] = results_df
+
+print(df.columns)
+print(df.head())
+
+
 
 print("Training Word2Vec model...")
 model = Word2Vec(
