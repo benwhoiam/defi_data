@@ -14,9 +14,21 @@ with open('train.json', 'r', encoding='utf-8') as f:
     train_data = json.load(f)
 df = pd.DataFrame.from_dict(train_data, orient='index', columns=['description', 'Gender']).reset_index().rename(columns={'index': 'Id'})
 
+print("Checking for problematic rows in 'description'...")
+print(df['description'].isnull().sum(), "rows are null in 'description'")
+print(df['description'].head())
+
+df['description'] = df['description'].fillna("")
+
 print("Loading Spacy model...")
 nlp = spacy.load('en_core_web_sm')
 
+print("Cleaning and tokenizing training data...")
+
+# Handle missing or invalid data in 'description'
+df['description'] = df['description'].fillna("")
+
+# Define the clean_and_tokenize function with error handling
 def clean_and_tokenize(text):
     if not isinstance(text, str) or not text.strip():
         return "", []  # Return empty values for invalid or empty input
@@ -27,8 +39,10 @@ def clean_and_tokenize(text):
     tokens = [token.lemma_ for token in doc if token.is_alpha and not token.is_stop]  # Lemmatize and remove stopwords
     return " ".join(tokens), tokens
 
-print("Cleaning and tokenizing training data...")
-df[['Clean', 'Tokens']] = df['description'].apply(lambda t: pd.Series(clean_and_tokenize(t)))
+# Apply the function to the 'description' column
+df[['Clean', 'Tokens']] = df['description'].apply(
+    lambda t: pd.Series(clean_and_tokenize(t))
+)
 
 print("Training Word2Vec model...")
 model = Word2Vec(
