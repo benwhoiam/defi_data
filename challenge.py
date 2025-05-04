@@ -8,8 +8,8 @@ from sklearn.metrics import classification_report
 from gensim.models import Word2Vec
 import json
 import numpy as np
-
-print("V.1.0.5")
+version_ = "V.1.0.6"
+print("Version:", version_)
 print("Loading training data...")
 with open('train_mini.json', 'r', encoding='utf-8') as f:
     train_data = json.load(f)
@@ -116,3 +116,4 @@ template['Category'] = template['Id'].map(
 template.to_csv('submission.csv', index=False)
 
 print("Submission file saved as 'submission.csv'.")
+print("Version:", version_)
