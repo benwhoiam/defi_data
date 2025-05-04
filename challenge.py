@@ -9,6 +9,7 @@ from gensim.models import Word2Vec
 import json
 import numpy as np
 
+print("V.1.0.1")
 print("Loading training data...")
 with open('train.json', 'r', encoding='utf-8') as f:
     train_data = json.load(f)
