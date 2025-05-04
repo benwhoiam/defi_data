@@ -8,7 +8,7 @@ from sklearn.metrics import classification_report
 from gensim.models import Word2Vec
 import json
 import numpy as np
-version_ = "V.1.0.6"
+version_ = "V.1.0.7"
 print("Version:", version_)
 print("Loading training data...")
 with open('train_mini.json', 'r', encoding='utf-8') as f:
@@ -43,7 +43,7 @@ def clean_and_tokenize(text):
 print("Cleaning and tokenizing training data...")
 results = df['description'].apply(clean_and_tokenize)
 # 1. On transforme chaque tuple en une liste de taille 2, en remplaçant les invalides par ("",[])
-tuples = results.apply(lambda x: x if (isinstance(x, tuple) and len(x)==2) else ("","[]"))
+tuples = results.apply(lambda x: x if (isinstance(x, tuple) and len(x)==2) else ("",[]))
 
 # 2. On crée un DataFrame à partir de ces tuples, en préservant l'index d'origine
 results_df = pd.DataFrame(tuples.tolist(), 
