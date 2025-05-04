@@ -9,9 +9,9 @@ from gensim.models import Word2Vec
 import json
 import numpy as np
 
-print("V.1.0.2")
+print("V.1.0.3")
 print("Loading training data...")
-with open('train.json', 'r', encoding='utf-8') as f:
+with open('train_mini.json', 'r', encoding='utf-8') as f:
     train_data = json.load(f)
 df = pd.DataFrame(train_data)
 print("Checking for problematic rows in 'description'...")
@@ -60,15 +60,14 @@ print(df.head())
 
 print("Training Word2Vec model...")
 model = Word2Vec(
-    sentences=df['Tokens'],
     size=100,  # Replace 'vector_size' with 'size'
     window=5,
     min_count=2,
     workers=4,
     sg=1
 )
-model.build_vocab(df['Tokens'])
-model.train(df['Tokens'], total_examples=model.corpus_count, epochs=10)
+model.build_vocab(df['Tokens'])  # Build the vocabulary
+model.train(df['Tokens'], total_examples=model.corpus_count, epochs=10)  # Train the model
 
 print("Loading labels...")
 labels_df = pd.read_csv('train_label.csv')
@@ -94,7 +93,7 @@ clf_w2v.fit(X, y)
 
 
 print("Loading test data...")
-with open('test.json', 'r', encoding='utf-8') as f:
+with open('test_mini.json', 'r', encoding='utf-8') as f:
     test_data = json.load(f)
 test_df = pd.DataFrame(test_data)
 
