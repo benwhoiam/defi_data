@@ -9,7 +9,7 @@ from gensim.models import Word2Vec
 import json
 import numpy as np
 
-print("V.1.0.3")
+print("V.1.0.4")
 print("Loading training data...")
 with open('train_mini.json', 'r', encoding='utf-8') as f:
     train_data = json.load(f)
@@ -65,9 +65,10 @@ model = Word2Vec(
     min_count=2,
     workers=4,
     sg=1
+    iter=10
 )
 model.build_vocab(df['Tokens'])  # Build the vocabulary
-model.train(df['Tokens'], total_examples=model.corpus_count, epochs=10)  # Train the model
+model.train(df['Tokens'], total_examples=model.corpus_count, epochs=model.iter)  # Train the model
 
 print("Loading labels...")
 labels_df = pd.read_csv('train_label.csv')
