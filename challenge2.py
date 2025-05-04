@@ -13,7 +13,7 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
 # 1. Chargement et prétraitement des données
 
-version_ = "V.2.0.0"
+version_ = "V.2.0.1"
 print("Version:", version_)
 
 print("Loading training data...")
@@ -113,7 +113,7 @@ test_df['Predicted_Category'] = le.inverse_transform(pred_labels)
 print("Preparing submission file...")
 template = pd.read_csv('template_submissions.csv')
 template['Category'] = template['Id'].map(test_df.set_index('Id')['Predicted_Category'])
-template.to_csv('submission.csv', index=False)
+template.to_csv('submission2.csv', index=False)
 
 print("Submission saved to submission.csv")
 print("Version:", version_)
