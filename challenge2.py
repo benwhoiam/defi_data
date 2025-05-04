@@ -4,6 +4,10 @@ import json
 import re
 import spacy
 
+# Workaround for NumPy versions where np.object is removed
+if not hasattr(np, 'object'):
+    np.object = object
+
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
@@ -13,7 +17,7 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
 # 1. Chargement et prétraitement des données
 
-version_ = "V.2.0.1"
+version_ = "V.2.0.2"
 print("Version:", version_)
 
 print("Loading training data...")
