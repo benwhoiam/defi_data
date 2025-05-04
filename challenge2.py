@@ -7,6 +7,12 @@ import spacy
 # Workaround for NumPy versions where np.object is removed
 if not hasattr(np, 'object'):
     np.object = object
+if not hasattr(np, 'bool'):
+    np.bool = bool
+if not hasattr(np, 'int'):
+    np.int = int
+if not hasattr(np, 'float'):
+    np.float = float
 
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras.preprocessing.text import Tokenizer
@@ -17,7 +23,7 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
 # 1. Chargement et prétraitement des données
 
-version_ = "V.2.0.2"
+version_ = "V.2.0.3"
 print("Version:", version_)
 
 print("Loading training data...")
