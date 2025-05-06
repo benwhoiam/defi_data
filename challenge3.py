@@ -7,6 +7,10 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.utils import to_categorical
 
 # Load the dataset
+
+version_ = "V.3.0.1"
+print("Version:", version_)
+
 print("Loading dataset...")
 data = pd.read_json('train_mini.json').set_index('Id')
 print("Dataset loaded successfully!")
