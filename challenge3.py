@@ -7,7 +7,7 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.utils import to_categorical
 
 # Load the dataset
-version_ = "V.3.0.5"
+version_ = "V.3.0.6"
 print("Version:", version_)
 print("Loading dataset...")
 data = pd.read_json('train_mini.json').set_index('Id')
@@ -16,22 +16,22 @@ print("Dataset loaded successfully!")
 # Preprocessing
 print("Preprocessing data...")
 X = data['description']  # Text descriptions
-y = data['gender']  # Gender is used as a placeholder for categories (to be mapped later)
+y = data['description']  # Use 'description' to predict job categories
 print(f"Number of samples: {len(X)}")
 
 # Load job categories from categories_string.csv
 print("Loading job categories...")
-categories_mapping = pd.read_csv('categories_string.csv', header=None, index_col=1, squeeze=True).to_dict()
+categories_mapping = pd.read_csv('categories_string.csv', header=None, index_col=0, squeeze="columns").to_dict()
 
-# Map gender to job categories using categories_string.csv
-print("Mapping gender to job categories...")
-data['Category'] = data['gender'].map(categories_mapping)
+# Map descriptions to job categories using categories_string.csv
+print("Mapping descriptions to job categories...")
+data['Category'] = data['description'].map(categories_mapping)
 
 # Debug: Print unmapped values
 unmapped = data[data['Category'].isnull()]
 if not unmapped.empty:
-    print("Warning: Some categories could not be mapped. Unmapped values:")
-    print(unmapped[['description', 'gender']])
+    print("Warning: Some descriptions could not be mapped. Unmapped values:")
+    print(unmapped[['description']])
 
 # Drop rows with missing Category values
 data = data.dropna(subset=['Category'])
