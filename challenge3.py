@@ -7,7 +7,7 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.utils import to_categorical
 
 # Load the dataset
-version_ = "V.3.0.4"
+version_ = "V.3.0.5"
 print("Version:", version_)
 print("Loading dataset...")
 data = pd.read_json('train_mini.json').set_index('Id')
@@ -21,7 +21,7 @@ print(f"Number of samples: {len(X)}")
 
 # Load job categories from categories_string.csv
 print("Loading job categories...")
-categories_mapping = pd.read_csv('categories_string.csv', header=None, index_col=1, squeeze="columns").to_dict()
+categories_mapping = pd.read_csv('categories_string.csv', header=None, index_col=1, squeeze=True).to_dict()
 
 # Map gender to job categories using categories_string.csv
 print("Mapping gender to job categories...")
@@ -35,6 +35,8 @@ if not unmapped.empty:
 
 # Drop rows with missing Category values
 data = data.dropna(subset=['Category'])
+if data.empty:
+    raise ValueError("No valid data left after mapping categories. Check your input files.")
 print("Categories mapped successfully!")
 
 # Encode job categories
