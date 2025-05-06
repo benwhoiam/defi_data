@@ -21,7 +21,7 @@ print(f"Number of samples: {len(X)}")
 
 # Load job categories from categories_string.csv
 print("Loading job categories...")
-categories_mapping = pd.read_csv('categories_string.csv', header=None, index_col=1, squeeze=True).to_dict()
+categories_mapping = pd.read_csv('categories_string.csv', header=None, index_col=1, squeeze="columns").to_dict()
 
 # Map gender to job categories using categories_string.csv
 print("Mapping gender to job categories...")
@@ -31,7 +31,7 @@ data['Category'] = data['gender'].map(categories_mapping)
 unmapped = data[data['Category'].isnull()]
 if not unmapped.empty:
     print("Warning: Some categories could not be mapped. Unmapped values:")
-    print(unmapped)
+    print(unmapped[['description', 'gender']])
 
 # Drop rows with missing Category values
 data = data.dropna(subset=['Category'])
