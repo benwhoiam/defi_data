@@ -7,10 +7,6 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.utils import to_categorical
 
 # Load the dataset
-
-version_ = "V.3.0.0"
-print("Version:", version_)
-
 print("Loading dataset...")
 data = pd.read_json('train_mini.json').set_index('Id')
 print("Dataset loaded successfully!")
@@ -18,15 +14,21 @@ print("Dataset loaded successfully!")
 # Preprocessing
 print("Preprocessing data...")
 X = data['description']  # Text descriptions
-y = data['gender']       # Labels (replace with job categories if available)
+y = data['job'] = data['gender']  # Replace 'gender' with 'job' (job categories will be encoded)
 print(f"Number of samples: {len(X)}")
 
-# Encode labels
-print("Encoding labels...")
+# Load job categories from categories_string.csv
+print("Loading job categories...")
+categories_mapping = pd.read_csv('categories_string.csv', header=None, index_col=0, squeeze=True).to_dict()
+data['job'] = data['job'].map(categories_mapping)  # Map job categories to their numeric values
+print("Job categories loaded and mapped successfully!")
+
+# Encode job categories
+print("Encoding job categories...")
 label_encoder = LabelEncoder()
-y_encoded = label_encoder.fit_transform(y)
+y_encoded = label_encoder.fit_transform(data['job'])
 y_categorical = to_categorical(y_encoded)
-print("Labels encoded successfully!")
+print("Job categories encoded successfully!")
 
 # Tokenize and pad text data
 print("Tokenizing and padding text data...")
@@ -75,16 +77,16 @@ predictions = model.predict(X_test_padded)
 predicted_classes = predictions.argmax(axis=1)  # Get the class with the highest probability
 print("Predictions generated successfully!")
 
-# Map predicted class indices back to their original labels
-print("Mapping predictions to labels...")
-predicted_labels = label_encoder.inverse_transform(predicted_classes)
-print("Predictions mapped to labels successfully!")
+# Map predicted class indices back to their original job categories
+print("Mapping predictions to job categories...")
+predicted_jobs = label_encoder.inverse_transform(predicted_classes)
+print("Predictions mapped to job categories successfully!")
 
 # Save the predictions to submissions3.csv
 print("Saving predictions to submissions3.csv...")
 submissions3 = pd.DataFrame({
     'Id': test_data.index,
-    'Category': predicted_labels
+    'Category': predicted_jobs
 })
 submissions3.to_csv('submissions3.csv', index=False)
 print("Predictions saved to submissions3.csv successfully!")
