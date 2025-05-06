@@ -7,7 +7,7 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.utils import to_categorical
 
 # Load the dataset
-version_ = "V.3.0.3"
+version_ = "V.3.0.4"
 print("Version:", version_)
 print("Loading dataset...")
 data = pd.read_json('train_mini.json').set_index('Id')
@@ -26,14 +26,21 @@ categories_mapping = pd.read_csv('categories_string.csv', header=None, index_col
 # Map gender to job categories using categories_string.csv
 print("Mapping gender to job categories...")
 data['Category'] = data['gender'].map(categories_mapping)
-if data['Category'].isnull().any():
-    print("Warning: Some categories could not be mapped. Check categories_string.csv and train_mini.json.")
+
+# Debug: Print unmapped values
+unmapped = data[data['Category'].isnull()]
+if not unmapped.empty:
+    print("Warning: Some categories could not be mapped. Unmapped values:")
+    print(unmapped)
+
+# Drop rows with missing Category values
+data = data.dropna(subset=['Category'])
 print("Categories mapped successfully!")
 
 # Encode job categories
 print("Encoding job categories...")
 label_encoder = LabelEncoder()
-y_encoded = label_encoder.fit_transform(data['Category'].dropna())  # Drop NaN values before encoding
+y_encoded = label_encoder.fit_transform(data['Category'])  # Encode the mapped categories
 y_categorical = to_categorical(y_encoded)
 print("Job categories encoded successfully!")
 
