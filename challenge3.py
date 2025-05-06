@@ -1,10 +1,27 @@
 import pandas as pd
+import re
+import spacy
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Embedding, GlobalAveragePooling1D
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.utils import to_categorical
+
+# Load SpaCy model for text preprocessing
+print("Loading SpaCy model...")
+nlp = spacy.load('en_core_web_sm')
+
+# Function to clean and preprocess text
+def clean_and_tokenize(text):
+    if not isinstance(text, str) or not text.strip():
+        return ""  # Return empty string for invalid or empty input
+    text = re.sub(r'<[^>]+>', ' ', text)  # Remove HTML tags
+    text = re.sub(r'http\S+', ' ', text)  # Remove URLs
+    text = text.lower().strip()  # Convert to lowercase and strip whitespace
+    doc = nlp(text)  # Process text using SpaCy
+    tokens = [token.lemma_ for token in doc if token.is_alpha and not token.is_stop]  # Lemmatize and remove stopwords
+    return " ".join(tokens)
 
 # Load the dataset
 version_ = "V.3.0.6"
@@ -15,23 +32,23 @@ print("Dataset loaded successfully!")
 
 # Preprocessing
 print("Preprocessing data...")
-X = data['description']  # Text descriptions
-y = data['description']  # Use 'description' to predict job categories
+data['Cleaned_Description'] = data['description'].apply(clean_and_tokenize)  # Clean and tokenize descriptions
+X = data['Cleaned_Description']  # Use cleaned descriptions for training
 print(f"Number of samples: {len(X)}")
 
 # Load job categories from categories_string.csv
 print("Loading job categories...")
 categories_mapping = pd.read_csv('categories_string.csv', header=None, index_col=0, squeeze="columns").to_dict()
 
-# Map descriptions to job categories using categories_string.csv
+# Map cleaned descriptions to job categories using categories_string.csv
 print("Mapping descriptions to job categories...")
-data['Category'] = data['description'].map(categories_mapping)
+data['Category'] = data['Cleaned_Description'].map(categories_mapping)
 
 # Debug: Print unmapped values
 unmapped = data[data['Category'].isnull()]
 if not unmapped.empty:
     print("Warning: Some descriptions could not be mapped. Unmapped values:")
-    print(unmapped[['description']])
+    print(unmapped[['description', 'Cleaned_Description']])
 
 # Drop rows with missing Category values
 data = data.dropna(subset=['Category'])
@@ -82,7 +99,8 @@ print(f"Number of test samples: {len(test_data)}")
 
 # Preprocess the text data in test_mini.json
 print("Preprocessing test data...")
-X_test = test_data['description']  # Assuming the column name is 'description'
+test_data['Cleaned_Description'] = test_data['description'].apply(clean_and_tokenize)  # Clean and tokenize descriptions
+X_test = test_data['Cleaned_Description']
 X_test_tokenized = tokenizer.texts_to_sequences(X_test)  # Tokenize the text
 X_test_padded = pad_sequences(X_test_tokenized, maxlen=100)  # Pad the sequences
 print("Test data preprocessed successfully!")
