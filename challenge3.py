@@ -8,9 +8,8 @@ from tensorflow.keras.utils import to_categorical
 
 # Load the dataset
 
-version_ = "V.3.0.1"
+version_ = "V.3.0.2"
 print("Version:", version_)
-
 print("Loading dataset...")
 data = pd.read_json('train_mini.json').set_index('Id')
 print("Dataset loaded successfully!")
@@ -18,19 +17,24 @@ print("Dataset loaded successfully!")
 # Preprocessing
 print("Preprocessing data...")
 X = data['description']  # Text descriptions
-y = data['job'] = data['gender']  # Replace 'gender' with 'job' (job categories will be encoded)
+y = data['job']  # Job categories (already present in the dataset)
 print(f"Number of samples: {len(X)}")
 
 # Load job categories from categories_string.csv
 print("Loading job categories...")
 categories_mapping = pd.read_csv('categories_string.csv', header=None, index_col=0, squeeze=True).to_dict()
-data['job'] = data['job'].map(categories_mapping)  # Map job categories to their numeric values
-print("Job categories loaded and mapped successfully!")
+
+# Map job categories to their numeric values
+print("Mapping job categories to numeric values...")
+data['job'] = data['job'].map(categories_mapping)
+if data['job'].isnull().any():
+    print("Warning: Some job categories could not be mapped. Check categories_string.csv and train_mini.json.")
+print("Job categories mapped successfully!")
 
 # Encode job categories
 print("Encoding job categories...")
 label_encoder = LabelEncoder()
-y_encoded = label_encoder.fit_transform(data['job'])
+y_encoded = label_encoder.fit_transform(data['job'].dropna())  # Drop NaN values before encoding
 y_categorical = to_categorical(y_encoded)
 print("Job categories encoded successfully!")
 
