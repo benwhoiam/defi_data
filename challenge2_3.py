@@ -63,11 +63,7 @@ for epoch in range(1, epochs+1):
 # 7. Sauvegarde du modèle
 torch.save(model.state_dict(), 'lstm_model.pth')
 print("✅ Entraînement terminé, modèle enregistré sous 'lstm_model.pth'.")
-```
 
-
-### predict_lstm_pytorch.py
-```python
 import numpy as np
 import joblib
 import torch
