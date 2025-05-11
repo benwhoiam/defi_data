@@ -9,7 +9,7 @@ from torch.utils.data import TensorDataset, DataLoader
 print("V2_1.2.0 – Entraînement LSTM PyTorch")
 
 # 1. Chargement des données prétraitées
-X_train = np.load('X_train_seq.npy')
+X_train = np.load('X_train.npy')
 y_train = np.load('y_train.npy')
 
 # 2. Charger vocabulaire et label encoder
@@ -73,7 +73,7 @@ import pandas as pd
 print("V2_1.2.0 – Prédiction LSTM PyTorch")
 
 # 1. Chargement des données et objets
-X_test = np.load('X_test_seq.npy')
+X_test = np.load('X_test.npy')
 stoi   = joblib.load('vocab_stoi.pkl')
 le     = joblib.load('label_encoder.pkl')
 
