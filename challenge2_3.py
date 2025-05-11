@@ -1,5 +1,4 @@
-### train_and_predict_pytorch.py
-```python
+
 import numpy as np
 import joblib
 import torch
@@ -79,4 +78,3 @@ submission = pd.DataFrame({
 })
 submission.to_csv('submission2_3.csv', index=False)
 print("✅ submission.csv généré.")
-```
