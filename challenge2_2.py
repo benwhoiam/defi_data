@@ -70,7 +70,7 @@ with torch.no_grad():
 
 # -- 6. Génération de la soumission
 print("Saving submission file…")
-test_ids = pd.read_json('test_mini.json', orient='records')['Id']
+test_ids = pd.read_json('test.json', orient='records')['Id']
 submission = pd.DataFrame({
     'Id':       test_ids,
     'Category': pred_labels
