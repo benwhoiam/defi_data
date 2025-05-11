@@ -5,15 +5,13 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import classification_report
 import numpy as np
 import json
-from gensim.models import Word2Vec
 
-version_ = "V.4.0.1"
+version_ = "V.4.0.2"
 print("Version:", version_)
 
-# Load pre-trained Word2Vec model
-print("Loading pre-trained Word2Vec model...")
-pretrained_model_path = "models/pre_trained_model.pkl"
-pretrained_model = Word2Vec.load(pretrained_model_path)
+# Load pre-trained SpaCy model
+print("Loading pre-trained SpaCy model...")
+nlp = spacy.load('en_core_web_sm')
 
 # Load training data
 print("Loading training data...")
@@ -24,10 +22,6 @@ df = pd.DataFrame(train_data)
 # Handle missing or invalid data in 'description'
 print("Checking for problematic rows in 'description'...")
 df['description'] = df['description'].fillna("")
-
-# Load Spacy model
-print("Loading Spacy model...")
-nlp = spacy.load('en_core_web_sm')
 
 # Define the clean_and_tokenize function
 def clean_and_tokenize(text):
@@ -52,20 +46,20 @@ print("Loading labels...")
 labels_df = pd.read_csv('train_label.csv')
 df = df.merge(labels_df, on='Id')
 
-# Vectorize tokens using the pre-trained Word2Vec model
-print("Vectorizing tokens using pre-trained Word2Vec model...")
-def vectorize_tokens(tokens, model):
-    vectors = [model.wv[token] for token in tokens if token in model.wv]
+# Vectorize tokens using SpaCy's pre-trained model
+print("Vectorizing tokens using SpaCy's pre-trained model...")
+def vectorize_tokens_spacy(tokens, nlp_model):
+    vectors = [nlp_model(token).vector for token in tokens if token.strip()]
     if vectors:
         return np.mean(vectors, axis=0)
     else:
-        return np.zeros(model.vector_size)
+        return np.zeros(nlp_model("word").vector.shape[0])
 
-df['W2V_Vector'] = df['Tokens'].apply(lambda tokens: vectorize_tokens(tokens, pretrained_model))
+df['Vector'] = df['Tokens'].apply(lambda tokens: vectorize_tokens_spacy(tokens, nlp))
 
 # Prepare training data
 print("Preparing training data...")
-X = np.vstack(df['W2V_Vector'].values)
+X = np.vstack(df['Vector'].values)
 y = df['Category'].values
 
 # Train Neural Network model
@@ -84,13 +78,13 @@ print("Cleaning and tokenizing test data...")
 test_df[['Clean', 'Tokens']] = test_df['description'].apply(lambda t: pd.Series(clean_and_tokenize(t)))
 
 # Vectorize test data
-print("Vectorizing test data using pre-trained Word2Vec model...")
-test_df['W2V_Vector'] = test_df['Tokens'].apply(lambda tokens: vectorize_tokens(tokens, pretrained_model))
-X_test_w2v = np.vstack(test_df['W2V_Vector'].values)
+print("Vectorizing test data using SpaCy's pre-trained model...")
+test_df['Vector'] = test_df['Tokens'].apply(lambda tokens: vectorize_tokens_spacy(tokens, nlp))
+X_test = np.vstack(test_df['Vector'].values)
 
 # Predict categories for test data
 print("Predicting categories for test data...")
-test_df['Predicted_Category_NN'] = nn_model.predict(X_test_w2v)
+test_df['Predicted_Category_NN'] = nn_model.predict(X_test)
 
 # Prepare submission file
 print("Preparing submission file...")
