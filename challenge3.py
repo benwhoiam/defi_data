@@ -36,14 +36,20 @@ data['Cleaned_Description'] = data['description'].apply(clean_and_tokenize)  # C
 X = data['Cleaned_Description']  # Use cleaned descriptions for training
 print(f"Number of samples: {len(X)}")
 
-# Load job categories from categories_string.csv
-print("Loading job categories...")
-categories_mapping = pd.read_csv('categories_string.csv', header=None, index_col=0, squeeze="columns").to_dict()
+# Load category label indices for each training sample
+print("Loading training labels...")
+labels = pd.read_csv('train_label_mini.csv').set_index('Id')
 
-# Map cleaned descriptions to job categories using categories_string.csv
-print("Mapping descriptions to job categories...")
-data['Category'] = data['Cleaned_Description'].map(categories_mapping)
+# Merge labels with training data
+data = data.merge(labels, left_index=True, right_index=True)
+print("Training labels merged successfully!")
 
+# Load category index-to-name mapping (optional, for future use)
+category_name_map = pd.read_csv('categories_string.csv', header=None, index_col=1)[0].to_dict()
+
+# For training, use label index directly
+y_encoded = data['Category']  # already numeric label
+y_categorical = to_categorical(y_encoded)
 # Debug: Print unmapped values
 unmapped = data[data['Category'].isnull()]
 if not unmapped.empty:
