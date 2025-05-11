@@ -13,7 +13,7 @@ print("V2_1.1.0 – Prétraitement train + test et sauvegarde")
 
 # -- 1. Chargement train
 print("Loading training data...")
-with open('train_mini.json', 'r', encoding='utf-8') as f:
+with open('train.json', 'r', encoding='utf-8') as f:
     train_data = json.load(f)
 df = pd.DataFrame(train_data).fillna('')
 
@@ -23,7 +23,7 @@ df = df.merge(labels_df, on='Id')
 
 # -- 2. Chargement test
 print("Loading test data...")
-with open('test_mini.json', 'r', encoding='utf-8') as f:
+with open('test.json', 'r', encoding='utf-8') as f:
     test_data = json.load(f)
 test_df = pd.DataFrame(test_data).fillna('')
 
