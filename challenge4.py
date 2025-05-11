@@ -15,7 +15,7 @@ nlp = spacy.load('en_core_web_sm')
 
 # Load training data
 print("Loading training data...")
-with open('train_mini.json', 'r', encoding='utf-8') as f:
+with open('train.json', 'r', encoding='utf-8') as f:
     train_data = json.load(f)
 df = pd.DataFrame(train_data)
 
@@ -69,7 +69,7 @@ nn_model.fit(X, y)
 
 # Load test data
 print("Loading test data...")
-with open('test_mini.json', 'r', encoding='utf-8') as f:
+with open('test.json', 'r', encoding='utf-8') as f:
     test_data = json.load(f)
 test_df = pd.DataFrame(test_data)
 
@@ -92,7 +92,7 @@ template = pd.read_csv('template_submissions.csv')
 template['Category'] = template['Id'].map(
     test_df.set_index('Id')['Predicted_Category_NN']
 )
-template.to_csv('submission.csv', index=False)
+template.to_csv('submission4.csv', index=False)
 
 print("Submission file saved as 'submission4.csv'.")
 print("Version:", version_)
