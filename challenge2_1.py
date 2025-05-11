@@ -42,24 +42,29 @@ from sklearn.feature_extraction.text import CountVectorizer
 MAX_VOCAB = 20000
 MAX_LEN = 100
 
-# Utilisation de CountVectorizer pour tokeniser et créer une représentation des mots
+# Use CountVectorizer to tokenize and create a representation of words
 vectorizer = CountVectorizer(max_features=MAX_VOCAB, stop_words='english')
 X = vectorizer.fit_transform(df['Clean']).toarray()
 
-# Padding de la matrice X pour avoir une longueur uniforme
-X = np.pad(X, ((0, 0), (0, MAX_LEN - X.shape[1])), 'constant', constant_values=0)
+# Padding or truncating the matrix X to have a uniform length of MAX_LEN
+if X.shape[1] > MAX_LEN:
+    # Truncate sequences to MAX_LEN
+    X = X[:, :MAX_LEN]
+else:
+    # Pad sequences to MAX_LEN
+    X = np.pad(X, ((0, 0), (0, MAX_LEN - X.shape[1])), 'constant', constant_values=0)
 
-# Création des labels y sous forme de one-hot encoding
+# Create labels y as one-hot encoding
 y = np.eye(num_classes)[df['y']]
 
-# Sauvegarde des objets
+# Save objects
 print("Saving tokenizer, label encoder, X, and y...")
 
-# Sauvegarder le tokenizer et le label encoder
+# Save the tokenizer and label encoder
 joblib.dump(vectorizer, 'vectorizer.joblib')
 joblib.dump(le, 'label_encoder.joblib')
 
-# Sauvegarder X et y sous forme de fichiers .npy
+# Save X and y as .npy files
 np.save('X.npy', X)
 np.save('y.npy', y)
 
