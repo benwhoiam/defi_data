@@ -3,70 +3,79 @@ import numpy as np
 import json
 import re
 import spacy
-import joblib  # Pour la sauvegarde
-print("V2_1.0.0")
-# 1. Chargement et prétraitement des données
+import joblib
+from sklearn.preprocessing    import LabelEncoder
+from sklearn.feature_extraction.text import CountVectorizer
+import warnings
+
+warnings.filterwarnings("ignore", category=FutureWarning)
+print("V2_1.1.0 – Prétraitement train + test et sauvegarde")
+
+# -- 1. Chargement train
 print("Loading training data...")
 with open('train_mini.json', 'r', encoding='utf-8') as f:
     train_data = json.load(f)
 df = pd.DataFrame(train_data).fillna('')
 
-print("Merging labels...")
+print("Merging train labels...")
 labels_df = pd.read_csv('train_label.csv')
 df = df.merge(labels_df, on='Id')
 
+# -- 2. Chargement test
+print("Loading test data...")
+with open('test_mini.json', 'r', encoding='utf-8') as f:
+    test_data = json.load(f)
+test_df = pd.DataFrame(test_data).fillna('')
+
+# -- 3. Nettoyage & lemmatisation
 print("Cleaning and lemmatizing text data...")
 nlp = spacy.load('en_core_web_sm')
 def clean_text(text):
-    text = re.sub(r'<[^>]+>', ' ', text)  # Supprimer les balises HTML
-    text = re.sub(r'http\S+', ' ', text)  # Supprimer les URLs
-    text = text.lower().strip()  # Mettre en minuscule et enlever les espaces
-    doc = nlp(text)  # Appliquer spaCy pour la lemmatisation
-    tokens = [tok.lemma_ for tok in doc if tok.is_alpha and not tok.is_stop]  # Lemmatisation et suppression des mots vides
-    return ' '.join(tokens)
+    text = re.sub(r'<[^>]+>', ' ', text)
+    text = re.sub(r'http\S+', ' ', text)
+    text = text.lower().strip()
+    doc = nlp(text)
+    return ' '.join(tok.lemma_ for tok in doc if tok.is_alpha and not tok.is_stop)
 
-df['Clean'] = df['description'].apply(clean_text)
+df['Clean']      = df['description'].apply(clean_text)
+test_df['Clean'] = test_df['description'].apply(clean_text)
 
-# 2. Encodage des labels
-print("Encoding labels...")
-from sklearn.preprocessing import LabelEncoder
-
+# -- 4. Encodage des labels train
+print("Encoding train labels...")
 le = LabelEncoder()
 df['y'] = le.fit_transform(df['Category'])
 num_classes = len(le.classes_)
 
-# 3. Tokenisation & séquences
-print("Tokenizing and creating sequences...")
-from sklearn.feature_extraction.text import CountVectorizer
-
+# -- 5. Vectorisation train + test
+print("Vectorizing train + test (CountVectorizer)...")
 MAX_VOCAB = 20000
-MAX_LEN = 100
+MAX_LEN   = 100
 
-# Use CountVectorizer to tokenize and create a representation of words
 vectorizer = CountVectorizer(max_features=MAX_VOCAB, stop_words='english')
-X = vectorizer.fit_transform(df['Clean']).toarray()
+X_train = vectorizer.fit_transform(df['Clean']).toarray()
+X_test  = vectorizer.transform(test_df['Clean']).toarray()
 
-# Padding or truncating the matrix X to have a uniform length of MAX_LEN
-if X.shape[1] > MAX_LEN:
-    # Truncate sequences to MAX_LEN
-    X = X[:, :MAX_LEN]
-else:
-    # Pad sequences to MAX_LEN
-    X = np.pad(X, ((0, 0), (0, MAX_LEN - X.shape[1])), 'constant', constant_values=0)
+# -- 6. Truncate/pad train + test
+def pad_trunc(mat, max_len):
+    if mat.shape[1] > max_len:
+        return mat[:, :max_len]
+    elif mat.shape[1] < max_len:
+        return np.pad(mat, ((0,0),(0, max_len - mat.shape[1])), mode='constant')
+    else:
+        return mat
 
-# Create labels y as one-hot encoding
-y = np.eye(num_classes)[df['y']]
+X_train = pad_trunc(X_train, MAX_LEN)
+X_test  = pad_trunc(X_test,  MAX_LEN)
 
-# Save objects
-print("Saving tokenizer, label encoder, X, and y...")
+# -- 7. One-hot des labels train
+y_train = np.eye(num_classes)[df['y']]
 
-# Save the tokenizer and label encoder
-joblib.dump(vectorizer, 'vectorizer.joblib')
-joblib.dump(le, 'label_encoder.joblib')
+# -- 8. Sauvegarde de tous les artefacts
+print("Saving vectorizer, label encoder, X_train.npy, y_train.npy, X_test.npy …")
+joblib.dump(vectorizer,    'vectorizer.joblib')
+joblib.dump(le,            'label_encoder.joblib')
+np.save('X_train.npy', X_train)
+np.save('y_train.npy', y_train)
+np.save('X_test.npy',  X_test)
 
-# Save X and y as .npy files
-np.save('X.npy', X)
-np.save('y.npy', y)
-
-print("Objects saved successfully!")
-
+print("✅ Prétraitement terminé et fichiers sauvegardés.")
