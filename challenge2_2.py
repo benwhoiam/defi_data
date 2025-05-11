@@ -6,25 +6,30 @@ import torch.optim as optim
 from torch.utils.data import TensorDataset, DataLoader
 import pandas as pd
 
-print("Début entraînement + prédiction avec PyTorch")
+print("V2_1.3.1 – Entraînement + Prédiction PyTorch corrigé")
 
-# -- 1. Charger données et encoders
-X_train = np.load('X_train.npy')
-y_train = np.load('y_train.npy')
-X_test  = np.load('X_test.npy')
+# 1. Charger les artefacts prétraités
+X_train = np.load('X_train.npy')        # représentation bag-of-words pad/trunc
+y_train_onehot = np.load('y_train.npy') # one-hot
+X_test = np.load('X_test.npy')          # représentation bag-of-words pad/trunc
 
-vectorizer = joblib.load('vectorizer.joblib')
-le         = joblib.load('label_encoder.joblib')
+vectorizer = joblib.load('vectorizer.joblib')     # transformateur BOW
+le = joblib.load('label_encoder.joblib')           # encodeur de labels
 
-# -- 2. Convertir en tensors
-X_train_t = torch.tensor(X_train, dtype=torch.float32)
-y_train_t = torch.tensor(y_train, dtype=torch.float32)
-X_test_t  = torch.tensor(X_test,  dtype=torch.float32)
+# 2. Préparer les labels pour CrossEntropyLoss
+# Convertir one-hot en indices de classes
+y_train = np.argmax(y_train_onehot, axis=1)
 
-train_ds = TensorDataset(X_train_t, y_train_t)
-train_loader = DataLoader(train_ds, batch_size=32, shuffle=True)
+# 3. Conversion en tensors PyTorch
+dtype = torch.float32
+X_tr = torch.tensor(X_train, dtype=dtype)
+y_tr = torch.tensor(y_train, dtype=torch.long)
+X_te = torch.tensor(X_test, dtype=dtype)
 
-# -- 3. Définir un modèle MLP (BOW) ou LSTM
+dataset = TensorDataset(X_tr, y_tr)
+train_loader = DataLoader(dataset, batch_size=32, shuffle=True)
+
+# 4. Définition du modèle MLP pour BOW
 class SimpleMLP(nn.Module):
     def __init__(self, input_dim, hidden_dim, num_classes):
         super().__init__()
@@ -34,46 +39,47 @@ class SimpleMLP(nn.Module):
             nn.Dropout(0.3),
             nn.Linear(hidden_dim, num_classes)
         )
+
     def forward(self, x):
         return self.net(x)
 
-input_dim   = X_train.shape[1]  # = MAX_LEN
-hidden_dim  = 64
-num_classes = y_train.shape[1]
-
+input_dim = X_train.shape[1]  # longueur du vecteur BOW
+hidden_dim = 64
+num_classes = y_train_onehot.shape[1]
 model = SimpleMLP(input_dim, hidden_dim, num_classes)
-criterion = nn.BCEWithLogitsLoss()
+
+# 5. Critère et optimiseur
+criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=1e-3)
 
-# -- 4. Entraînement
+# 6. Entraînement
 epochs = 15
 for epoch in range(1, epochs+1):
     model.train()
     total_loss = 0.0
     for xb, yb in train_loader:
         optimizer.zero_grad()
-        out = model(xb)
-        loss = criterion(out, yb)
+        logits = model(xb)
+        loss = criterion(logits, yb)
         loss.backward()
         optimizer.step()
         total_loss += loss.item()
     print(f"Epoch {epoch}/{epochs} – Loss: {total_loss/len(train_loader):.4f}")
 
-# -- 5. Prédiction sur test
+# 7. Prédiction sur X_test
 model.eval()
 with torch.no_grad():
-    logits = model(X_test_t)
-    probs  = torch.sigmoid(logits).numpy()  # pour BCEWithLogitsLoss
-    # argmax pour multi-classes
-    preds = np.argmax(probs, axis=1)
+    logits = model(X_te)
+    preds = torch.argmax(logits, dim=1).cpu().numpy()
     pred_labels = le.inverse_transform(preds)
 
-# -- 6. Génération de la soumission
-print("Saving submission file…")
+# 8. Génération de la soumission
+print("Saving submission2_2.csv...")
+# Charger les Id du test
 test_ids = pd.read_json('test.json', orient='records')['Id']
 submission = pd.DataFrame({
-    'Id':       test_ids,
+    'Id': test_ids,
     'Category': pred_labels
 })
 submission.to_csv('submission2_2.csv', index=False)
-print("✅ submission2_2.csv généré. ")
+print("✅ submission2_2.csv généré.")
