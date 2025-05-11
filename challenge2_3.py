@@ -1,5 +1,4 @@
-### train_lstm_pytorch.py
-```python
+
 import numpy as np
 import joblib
 import torch
