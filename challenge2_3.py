@@ -34,8 +34,7 @@ class LSTMClassifier(nn.Module):
 
     def forward(self, x):
         emb, _ = self.lstm(self.embedding(x))
-        # prendre la sortie de la dernière étape temporelle
-        last = emb[:,-1,:]
+        last = emb[:, -1, :]
         return self.fc(self.dropout(last))
 
 vocab_size  = len(stoi)
@@ -46,7 +45,14 @@ num_classes = len(le.classes_)
 model = LSTMClassifier(vocab_size, embed_dim, hidden_dim, num_classes, pad_idx=stoi['<PAD>'])
 
 # 4. Configuration de l’entraînement
-criterion = nn.CrossEntropyLoss()
+# 4.1 Calcul manuel des poids de classes
+counts = np.bincount(y_train, minlength=num_classes)
+total  = y_train.shape[0]
+# éviter division par zéro au cas où une classe n'apparaît pas
+counts = np.where(counts == 0, 1, counts)
+class_weights = torch.tensor((total / counts), dtype=torch.float)
+
+criterion = nn.CrossEntropyLoss(weight=class_weights)
 optimizer = optim.Adam(model.parameters(), lr=1e-3)
 epochs    = 15
 
@@ -54,14 +60,24 @@ epochs    = 15
 for epoch in range(1, epochs+1):
     model.train()
     total_loss = 0.0
+    correct    = 0
+    total      = 0
+
     for xb, yb in train_loader:
         optimizer.zero_grad()
         logits = model(xb)
         loss   = criterion(logits, yb)
         loss.backward()
         optimizer.step()
+
         total_loss += loss.item()
-    print(f"Epoch {epoch}/{epochs} — loss: {total_loss/len(train_loader):.4f}")
+        preds = logits.argmax(dim=1)
+        correct += (preds == yb).sum().item()
+        total   += yb.size(0)
+
+    train_loss = total_loss / len(train_loader)
+    train_acc  = correct / total
+    print(f"Epoch {epoch}/{epochs} — loss: {train_loss:.4f} — acc: {train_acc:.4f}")
 
 # 6. Prédiction sur le test
 model.eval()
@@ -71,7 +87,7 @@ with torch.no_grad():
     cats   = le.inverse_transform(preds)
 
 # 7. Écriture de la soumission
-print("Saving submission.csv...")
+print("Saving submission2_3.csv...")
 test_ids   = pd.read_json('test_mini.json', orient='records')['Id']
 submission = pd.DataFrame({'Id': test_ids, 'Category': cats})
 submission.to_csv('submission2_3.csv', index=True)
