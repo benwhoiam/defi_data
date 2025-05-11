@@ -77,4 +77,4 @@ submission = pd.DataFrame({
     'Category': labels
 })
 submission.to_csv('submission2_3.csv', index=False)
-print("✅ submission.csv généré.")
+print("✅ submission2_3.csv généré.")
