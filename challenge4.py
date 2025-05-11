@@ -7,7 +7,7 @@ import numpy as np
 import json
 from gensim.models import Word2Vec
 
-version_ = "V.2.1.0"
+version_ = "V.4.0.1"
 print("Version:", version_)
 
 # Load pre-trained Word2Vec model
