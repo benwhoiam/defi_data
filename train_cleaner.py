@@ -14,14 +14,14 @@ def clean_text(text):
     return " ".join(tokens)
 
 # Nettoyage train
-with open('train.json','r',encoding='utf-8') as f:
+with open('train_mini.json','r',encoding='utf-8') as f:
     train = pd.DataFrame(json.load(f))
 train['description']=train['description'].fillna("")
 train['Clean']=train['description'].apply(clean_text)
 train.to_csv('train_cleaned.csv',index=False)
 
 # Nettoyage test
-with open('test.json','r',encoding='utf-8') as f:
+with open('test_mini.json','r',encoding='utf-8') as f:
     test = pd.DataFrame(json.load(f))
 test['description']=test['description'].fillna("")
 test['Clean']=test['description'].apply(clean_text)
