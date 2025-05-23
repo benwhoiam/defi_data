@@ -1,62 +1,82 @@
 import json
 import pandas as pd
-import numpy as np
 import re
 import spacy
+
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.svm import LinearSVC
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, make_scorer, f1_score
 
-# Chargement des données
-with open('train.json', 'r', encoding='utf-8') as f:
+# 1) Chargement et préparation
+with open('train.json','r',encoding='utf-8') as f:
     train_data = json.load(f)
-df = pd.DataFrame(train_data)
-df['description'] = df['description'].fillna("")
+df = pd.DataFrame(train_data).fillna({'description':""})
 
-# SpaCy 2.x
-nlp = spacy.load('en_core_web_lg')
+labels = pd.read_csv('train_label.csv')
+df = df.merge(labels, on='Id')
 
+# 2) Tokenisation / nettoyage
+nlp = spacy.load('en_core_web_sm')
 def clean_and_tokenize(text):
-    if not isinstance(text, str) or not text.strip():
-        return ""
     text = re.sub(r'<[^>]+>', ' ', text)
-    text = re.sub(r'http\S+', ' ', text)
-    text = text.lower().strip()
+    text = re.sub(r'http\S+', ' ', text).lower().strip()
     doc = nlp(text)
-    tokens = [tok.lemma_ for tok in doc if tok.is_alpha and not tok.is_stop]
-    return " ".join(tokens)
+    return " ".join(tok.lemma_ for tok in doc if tok.is_alpha and not tok.is_stop)
 
 df['Clean'] = df['description'].apply(clean_and_tokenize)
 
-# Chargement des labels
-labels_df = pd.read_csv('train_label.csv')
-df = df.merge(labels_df, on='Id')
-
-# Vectorisation TF-IDF
-tfidf = TfidfVectorizer(max_features=20000, ngram_range=(1,2), min_df=5, norm='l2')
-X_tfidf = tfidf.fit_transform(df['Clean'])
-y = df['Category']
-
+# 3) Split train/validation
 X_train, X_val, y_train, y_val = train_test_split(
-    X_tfidf, y, test_size=0.2, stratify=y, random_state=42
+    df['Clean'], df['Category'],
+    test_size=0.2, stratify=df['Category'], random_state=42
 )
 
+# 4) Pipeline + GridSearchCV
+pipeline = Pipeline([
+    ("tfidf", TfidfVectorizer()),
+    ("clf", LinearSVC(dual=False, max_iter=5000))
+])
+
+param_grid = {
+    # TF-IDF params
+    "tfidf__ngram_range": [(1,1), (1,2)],
+    "tfidf__min_df": [3, 5, 10],
+    "tfidf__max_df": [0.8, 0.9, 1.0],
+    # SVM params
+    "clf__C": [0.01, 0.1, 1.0, 10.0, 100.0],
+    "clf__class_weight": [None, "balanced"]
+}
+
+# Utiliser macro-F1 pour équilibrer toutes les classes
+scorer = make_scorer(f1_score, average="macro")
+
+grid = GridSearchCV(
+    pipeline, param_grid,
+    cv=5, n_jobs=-1, scoring=scorer, verbose=1
+)
+grid.fit(X_train, y_train)
 
 
 
-# Modèle RandomForest
-rf_clf = RandomForestClassifier(n_estimators=200, max_depth=30, random_state=42, n_jobs=-1)
-rf_clf.fit(X_train, y_train)
-y_pred = rf_clf.predict(X_val)
+# 5) Évaluation sur la validation
+y_val_pred = grid.predict(X_val)
+print("=== Rapport sur le set de validation ===")
+print(classification_report(y_val, y_val_pred))
 
-print(classification_report(y_val, y_pred))
+# 6) Appliquer au jeu de test
+with open('test.json','r',encoding='utf-8') as f:
+    test_data = json.load(f)
+test_df = pd.DataFrame(test_data).fillna({'description':""})
+test_df['Clean'] = test_df['description'].apply(clean_and_tokenize)
 
-# Prédiction test
-preds = rf_clf.predict(X_test)
+preds = grid.predict(test_df['Clean'])
 
+# 7) Générer la soumission
 template = pd.read_csv('template_submissions.csv')
-template['Category'] = template['Id'].map(dict(zip(test_df['Id'], preds)))
-template.to_csv('submission_rf.csv', index=False)
-print("Fichier de soumission enregistré : 'submission_rf.csv'")
+mapping = dict(zip(test_df['Id'], preds))
+template['Category'] = template['Id'].map(mapping)
+template.to_csv('submission_svm_tuned.csv', index=False)
+print(" Soumission enregistrée : submission_svm_tuned.csv")
+
